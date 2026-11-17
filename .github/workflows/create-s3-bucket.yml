@@ -14,7 +14,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
-      BUCKET_NAME: ${{ vars.S3_BUCKET_NAME }}
     steps:
       - name: Check out main
         uses: actions/checkout@v4
@@ -32,3 +31,5 @@ jobs:
         run: |
          aws sts get-caller-identity
          echo "AWS account login successful"
+      - name: check current directory
+        run: pwd
