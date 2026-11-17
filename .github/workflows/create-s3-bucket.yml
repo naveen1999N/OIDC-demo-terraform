@@ -18,8 +18,13 @@ permissions:
 jobs:
   create-bucket:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra
     env:
       AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+      TF_MANAGED_BUCKET: naveen-oidc-demo-bucket
+      TF_DESTROY: ${{ github.event_name == 'workflow_dispatch' && inputs.destroy }}
     steps:
       - name: Check out main
         uses: actions/checkout@v4
@@ -51,6 +56,17 @@ jobs:
         run: |
           terraform fmt -check
           terraform validate 
+      - name: Reconcile existing bucket with Terraform state
+        run: |
+          if terraform state show aws_s3_bucket.this >/dev/null 2>&1; then
+            echo "S3 bucket is already tracked in Terraform state."
+          elif [ "$TF_DESTROY" = "true" ]; then
+            terraform import aws_s3_bucket.this "$TF_MANAGED_BUCKET"
+          elif aws s3api head-bucket --bucket "$TF_MANAGED_BUCKET" 2>/dev/null; then
+            terraform import aws_s3_bucket.this "$TF_MANAGED_BUCKET"
+          else
+            echo "S3 bucket does not exist yet; Terraform will create it."
+          fi
       - name: Running terraform plan
         if: github.event_name != 'workflow_dispatch' || inputs.destroy != true
         run: |
