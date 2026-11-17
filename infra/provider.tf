@@ -2,7 +2,7 @@ terraform {
   required_version = ">= 1.5.0"
 
   backend "s3" {
-    bucket       = "terrform-backend"
+    bucket       = "terra-backend-naveen"
     key          = "infra/terraform.tfstate"
     region       = "ap-southeast-1"
     use_lockfile = true
