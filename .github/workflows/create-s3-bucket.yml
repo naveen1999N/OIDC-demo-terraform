@@ -5,6 +5,12 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      destroy:
+        description: "Destroy Terraform-managed resources"
+        required: true
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -46,8 +52,14 @@ jobs:
           terraform fmt -check
           terraform validate 
       - name: Running terraform plan
+        if: github.event_name != 'workflow_dispatch' || inputs.destroy != true
         run: |
           terraform plan -out=tfplan
       - name: Running terraform apply
+        if: github.event_name != 'workflow_dispatch' || inputs.destroy != true
         run: |
           terraform apply -auto-approve tfplan
+      - name: Running terraform destroy
+        if: github.event_name == 'workflow_dispatch' && inputs.destroy == true
+        run: |
+          terraform destroy -auto-approve
